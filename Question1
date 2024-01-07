@@ -1,18 +1,19 @@
+import java.util.Scanner;
 import java.util.concurrent.*;
 
-class coin implements Callable<Integer> {
+class Coin implements Callable<Integer> {
     private final int[] coins;
     private final int sum;
     private final int start;
     private final int end;
 
-    public coin(int[] coins, int sum, int start, int end) {
+    public Coin(int[] coins, int sum, int start, int end) {
         this.coins = coins;
         this.sum = sum;
         this.start = start;
         this.end = end;
     }
-
+    
     public Integer call() {
         int[] dp = new int[sum + 1];
         dp[0] = 1;
@@ -42,7 +43,7 @@ public class Main {
             if (i == numThreads - 1) {
                 end += remaining;
             }
-            coin task = new coin(coins, sum, start, end);
+            Coin task = new Coin(coins, sum, start, end);
             futures[i] = executor.submit(task);
             start = end;
             end += partitions;
@@ -58,15 +59,30 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        int[] coins = {1, 2, 5};
-        int sum = 5;
-        int numThreads = 3;
+        Scanner s = new Scanner(System.in);
+
+        System.out.print("Enter the size of the array: ");
+        int N = s.nextInt();
+
+        int[] coins = new int[N];
+        System.out.println("Enter array elements:");
+        for (int i = 0; i < N; i++) {
+            coins[i] = s.nextInt();
+        }
+
+        System.out.print("Enter sum: ");
+        int sum = s.nextInt();
+
+        System.out.print("Enter the number of threads: ");
+        int numThreads = s.nextInt();
 
         try {
             int totalCombinations = findCoinCombinations(coins, sum, numThreads);
             System.out.println("Total combinations: " + totalCombinations);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
+        } finally {
+            s.close();
         }
     }
 }
