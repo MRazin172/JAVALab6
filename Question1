@@ -1,88 +1,61 @@
-import java.util.Scanner;
-import java.util.concurrent.*;
+package JAVA_LAB6;
+import java.util.*;
 
-class Coin implements Callable<Integer> {
-    private final int[] coins;
-    private final int sum;
-    private final int start;
-    private final int end;
 
-    public Coin(int[] coins, int sum, int start, int end) {
-        this.coins = coins;
-        this.sum = sum;
-        this.start = start;
-        this.end = end;
+public class coins {
+
+    public static void main(String[] args) throws InterruptedException {
+        Scanner input = new Scanner(System.in);
+        System.out.print("Enter the number of coins: ");
+        int n = input.nextInt();
+        int[] coinsArr = new int[n];
+
+        System.out.println("Enter the sum value you want to obtain : ");
+        int sum = input.nextInt();
+        Thread t1 = new Thread(() -> {
+
+            synchronized (coinsArr) {
+
+                System.out.print("Enter the coins denomination: ");
+                for (int i = 0; i < n; i++) {
+                    coinsArr[i] = input.nextInt();
+                }
+
+            }
+        });
+        List<List<Integer>> v = new ArrayList<>();
+        Thread t2 = new Thread(() -> {
+            synchronized (coinsArr) {
+                combiFunction(coinsArr, sum, 0, new ArrayList<>(), v);
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+        for (List<Integer> combination : v) {
+            System.out.println(combination);
+        }
+
     }
-    
-    public Integer call() {
-        int[] dp = new int[sum + 1];
-        dp[0] = 1;
 
-        for (int i = start; i < end; i++) {
-            for (int j = coins[i]; j <= sum; j++) {
-                dp[j] += dp[j - coins[i]];
+    static void combiFunction(int[] array, int target, int start, List<Integer> current,
+                              List<List<Integer>> result) {
+        if (target == 0) {
+
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = start; i < array.length; i++) {
+
+            if (array[i] <= target) {
+                current.add(array[i]);
+                combiFunction(array, target - array[i], i, current, result);
+                current.remove(current.size() - 1);
             }
         }
-
-        return dp[sum];
-    }
-}
-
-public class Main {
-    public static int findCoinCombinations(int[] coins, int sum, int numThreads) throws InterruptedException, ExecutionException {
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        int partitions = coins.length / numThreads;
-        int remaining = coins.length % numThreads;
-
-        int start = 0;
-        int end = partitions;
-
-        Future<Integer>[] futures = new Future[numThreads];
-
-        for (int i = 0; i < numThreads; i++) {
-            if (i == numThreads - 1) {
-                end += remaining;
-            }
-            Coin task = new Coin(coins, sum, start, end);
-            futures[i] = executor.submit(task);
-            start = end;
-            end += partitions;
-        }
-
-        int totalWays = 0;
-        for (Future<Integer> future : futures) {
-            totalWays += future.get();
-        }
-
-        executor.shutdown();
-        return totalWays;
     }
 
-    public static void main(String[] args) {
-        Scanner s = new Scanner(System.in);
-
-        System.out.print("Enter the size of the array: ");
-        int N = s.nextInt();
-
-        int[] coins = new int[N];
-        System.out.println("Enter array elements:");
-        for (int i = 0; i < N; i++) {
-            coins[i] = s.nextInt();
-        }
-
-        System.out.print("Enter sum: ");
-        int sum = s.nextInt();
-
-        System.out.print("Enter the number of threads: ");
-        int numThreads = s.nextInt();
-
-        try {
-            int totalCombinations = findCoinCombinations(coins, sum, numThreads);
-            System.out.println("Total combinations: " + totalCombinations);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        } finally {
-            s.close();
-        }
-    }
 }
